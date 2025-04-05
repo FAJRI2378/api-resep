@@ -1,10 +1,11 @@
 const mongoose = require("mongoose");
 
-const MenuSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  description: String,
-  price: { type: Number, required: true },
-  image: String, // bisa URL gambar
-}, { timestamps: true });
+const menuSchema = new mongoose.Schema({
+  nama: String,
+  harga: Number,
+  deskripsi: String,          // 🆕
+  videoUrl: String,           // 🆕
+  image: String,              // 🆕 (Base64 atau URL)
+});
 
-module.exports = mongoose.model("Menu", MenuSchema);
+module.exports = mongoose.model("Menu", menuSchema);
