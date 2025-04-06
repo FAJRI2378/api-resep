@@ -8,6 +8,9 @@ const app = express();
 // ✅ Middleware (LIMIT diperbesar sebelum routes)
 app.use(express.json({ limit: "10mb" })); // bisa kamu naikkan ke 20mb kalau perlu
 app.use(cors());
+const path = require("path");
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 
 // ✅ Koneksi DB
 connectDB();
