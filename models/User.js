@@ -4,7 +4,13 @@ const bcrypt = require("bcryptjs");
 const UserSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,  // otomatis simpan huruf kecil
+      trim: true        // hapus spasi di awal/akhir
+    },
     password: { type: String, required: true },
     role: { type: String, enum: ["admin", "user"], default: "user" },
   },
@@ -27,7 +33,7 @@ UserSchema.pre("save", async function (next) {
   }
 });
 
-// Tambahkan method untuk membandingkan password saat login
+// Method untuk membandingkan password saat login
 UserSchema.methods.comparePassword = async function (password) {
   try {
     return await bcrypt.compare(password, this.password);
