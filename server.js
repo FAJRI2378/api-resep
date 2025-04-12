@@ -11,6 +11,9 @@ app.use(cors());
 const path = require("path");
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+const favoriteRoutes = require("./routes/favoriteRoutes");
+app.use("/api/favorite", favoriteRoutes);
+
 
 // ✅ Koneksi DB
 connectDB();
