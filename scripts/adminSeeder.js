@@ -1,6 +1,6 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const User = require("../models/User"); // Sesuaikan dengan path model User
+const User = require("../api/models/User"); // Sesuaikan dengan path model User
 
 const seedAdmin = async () => {
   try {
