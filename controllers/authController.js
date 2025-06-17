@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const { sendVerificationEmail } = require("../utils/sendEmail");
 
 // 🔹 REGISTER USER
 exports.register = async (req, res) => {
@@ -13,7 +14,6 @@ exports.register = async (req, res) => {
     let user = await User.findOne({ email: cleanEmail });
     if (user) return res.status(400).json({ msg: "User sudah terdaftar" });
 
-    // gunakan cleanEmail saat menyimpan
     user = new User({ name, email: cleanEmail, password, role });
     await user.save();
     console.log("✅ User tersimpan:", user.email);
@@ -33,10 +33,7 @@ exports.login = async (req, res) => {
     console.log("Login dengan email:", email);
 
     const user = await User.findOne({ email });
-    if (!user) {
-      console.log("🔍 Semua user:", await User.find().lean());
-      return res.status(400).json({ msg: "User tidak ditemukan" });
-    }
+    if (!user) return res.status(400).json({ msg: "User tidak ditemukan" });
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(400).json({ msg: "Password salah" });
@@ -63,27 +60,55 @@ exports.login = async (req, res) => {
   }
 };
 
-// 🔹 RESET PASSWORD
-exports.resetPassword = async (req, res) => {
-  console.log("🚀 Request masuk ke resetPassword");
-
+// 🔹 SEND RESET CODE
+exports.sendResetCode = async (req, res) => {
   try {
-    const { email, newPassword } = req.body;
-    const cleanEmail = email.trim().toLowerCase();
-    console.log("Reset Password untuk:", cleanEmail);
+    const { email } = req.body;
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
 
-    const user = await User.findOne({ email: cleanEmail });
-    if (!user) return res.status(400).json({ msg: "User tidak ditemukan" });
+    if (!user) return res.status(404).json({ msg: "Email tidak ditemukan" });
+
+    const code = Math.floor(100000 + Math.random() * 900000); // 6 digit
+    user.verifyCode = code;
+    user.verifyCodeExpires = Date.now() + 10 * 60 * 1000; // 10 menit
+    await user.save();
+
+    await sendVerificationEmail(user.email, code);
+    res.json({ msg: "Kode verifikasi telah dikirim ke email" });
+  } catch (error) {
+    console.error("❌ Error di sendResetCode:", error);
+    res.status(500).json({ msg: "Gagal mengirim kode" });
+  }
+};
+
+// 🔹 RESET PASSWORD WITH CODE
+exports.resetPasswordWithCode = async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ msg: "Pengguna tidak ditemukan" });
+
+    if (
+      !user.verifyCode ||
+      !user.verifyCodeExpires ||
+      user.verifyCode !== code ||
+      new Date() > user.verifyCodeExpires
+    ) {
+      return res.status(400).json({ msg: "Kode tidak valid atau sudah kedaluwarsa" });
+    }
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
 
-    await user.save();
-    console.log("✅ Password berhasil direset untuk:", cleanEmail);
+    // Hapus kode agar tidak bisa dipakai ulang
+    user.verifyCode = undefined;
+    user.verifyCodeExpires = undefined;
 
+    await user.save();
     res.json({ msg: "Password berhasil direset" });
   } catch (error) {
-    console.error("❌ Error di resetPassword:", error);
-    res.status(500).json({ msg: "Server error" });
+    console.error("❌ Error reset password:", error);
+    res.status(500).json({ msg: "Kesalahan server" });
   }
 };

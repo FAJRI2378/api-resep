@@ -1,22 +1,20 @@
 const nodemailer = require("nodemailer");
 
-const sendEmail = async (to, subject, text) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+const transporter = nodemailer.createTransport({
+  service: "gmail", // Gunakan sesuai layanan email Anda
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
+exports.sendVerificationEmail = async (to, code) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: `"SPP App" <${process.env.EMAIL_USER}>`,
     to,
-    subject,
-    text,
+    subject: "Kode Verifikasi Reset Password",
+    html: `<p>Berikut adalah kode verifikasi Anda:</p><h2>${code}</h2>`,
   };
 
   await transporter.sendMail(mailOptions);
 };
-
-module.exports = sendEmail;

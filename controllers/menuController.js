@@ -6,7 +6,7 @@ const allowedKategori = ["Sarapan", "Utama", "Dessert", "Snacks"];
 exports.getAllMenus = async (req, res) => {
   try {
     const menus = await Menu.find();
-    res.json(menus);
+    res.json({ menus });
   } catch (error) {
     console.error("❌ Error ambil menu:", error);
     res.status(500).json({ msg: "Server error" });

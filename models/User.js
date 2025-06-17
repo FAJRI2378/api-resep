@@ -8,11 +8,14 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true,  // otomatis simpan huruf kecil
-      trim: true        // hapus spasi di awal/akhir
+      lowercase: true,
+      trim: true,
     },
     password: { type: String, required: true },
     role: { type: String, enum: ["admin", "user"], default: "user" },
+    // Tambahkan field untuk verifikasi password reset
+    verifyCode: { type: String, default: null },
+    verifyCodeExpires: { type: Date, default: null },
   },
   { timestamps: true }
 );
@@ -22,7 +25,6 @@ UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
   try {
-    // Pastikan password belum di-hash sebelumnya
     if (this.password && !this.password.startsWith("$2a$")) {
       const salt = await bcrypt.genSalt(10);
       this.password = await bcrypt.hash(this.password, salt);
