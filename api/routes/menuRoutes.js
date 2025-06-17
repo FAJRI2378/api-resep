@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const menuController = require("../config/controllers/menuController")
+const menuController = require("../controllers/menuController")
 
 // Route GET semua menu
 router.get("/", menuController.getAllMenus);
